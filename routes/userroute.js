@@ -25,6 +25,9 @@ router.get("/allcontentofuser", userRouter.getAllUserContent);
 router.get("/alluser", userRouter.getAllUser);
 router.get("/allcontent", userRouter.getAllContent);
 router.put("/like/:_id", userRouter.like )
-router.delete("/unlike/:_id", userRouter.like )
+router.put("/unlike/:_id", userRouter.unlike)
+router.post("/comment", userRouter.comment)
+router.get("/comment", userRouter.getAllComment)
+
 
 module.exports = router;

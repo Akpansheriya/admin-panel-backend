@@ -1,7 +1,7 @@
 const userControll = require("../models/user");
 const contentData = require("../models/content");
+const commentData = require("../models/comment");
 const bcrypt = require("bcrypt");
-
 
 const content = (req, res, next) => {
   const content = new contentData({
@@ -92,7 +92,7 @@ const userLogin = (req, res) => {
     .then((user) => {
       if (user.length < 1) {
         return res.status(400).json({
-          message: "Auth failed",
+          message: "user not exist",
         });
       }
       bcrypt.compare(req.body.password, user[0].password, (err, result) => {
@@ -126,18 +126,21 @@ const getAllUserContent = (req, res) => {
     });
 };
 
-const getAllContent = (req, res) => {
-  contentData
-    .find()
-    .then((result) => {
-      res.status(200).send(result);
-    })
-    .catch((error) => {
-      res.status(400).send({
-        message: "not found",
-        error: error,
-      });
-    });
+const getAllContent = async(req, res) => {
+  // const PAGE_SIZE = 6;
+  // const page = parseInt(req.query.page || "0");
+  // const total = await contentData.countDocuments({});
+ const content = await contentData
+    .find({})
+    // .limit(PAGE_SIZE)
+    // .skip(PAGE_SIZE * page);
+    res.status(200).json(content)
+    // .catch((error) => {
+    //   res.status(400).send({
+    //     message: "not found",
+    //     error: error,
+    //   });
+    // });
 };
 const getAllUser = (req, res) => {
   userControll
@@ -153,37 +156,81 @@ const getAllUser = (req, res) => {
     });
 };
 
-const like = (req,res) => {
-  contentData.findByIdAndUpdate({_id:req.params._id},{"$set":{likes:req.body.likes}},{"new":true})
+const like = (req, res) => {
+  contentData
+    .findByIdAndUpdate(
+      { _id: req.params._id },
+      { $push: { likes:req.body.likes } },
+      { new: true }
+    )
 
-  // const likes = new contentData({
-  //   likes:req.body.likes
-  // })
-  // likes.save()
-   .then(result => {
-    res.status(200).send(result)
-  }).catch(error => {
-    res.status(400).send({
-      error:error
+    // const likes = new contentData({
+    //   likes:req.body.likes
+    // })
+    // likes.save()
+    .then((result) => {
+      res.status(200).send(result);
     })
-  })
-}
+    .catch((error) => {
+      res.status(400).send({
+        error: error,
+      });
+    });
+};
 
-const unlike = (req,res) => {
-  contentData.findOneAndRemove({likes:req.body.likes})
+const unlike = (req, res) => {
+  contentData
+    .findOneAndUpdate({_id: req.params._id},
+      {$pull:{likes:req.body.likes}},
+      {new:true})
 
-  // const likes = new contentData({
-  //   likes:req.body.likes
-  // })
-  // likes.save()
-   .then(result => {
-    res.status(200).send(result)
-  }).catch(error => {
-    res.status(400).send({
-      error:error
+    // const likes = new contentData({
+    //   likes:req.body.likes
+    // })
+    // likes.save()
+    .then((result) => {
+      res.status(200).send(result);
     })
-  })
-}
+    .catch((error) => {
+      res.status(400).send({
+        error: error,
+      });
+    });
+};
+
+const comment = (req, res) => {
+  const userdata = new commentData({
+    contentId: req.body.contentId,
+    userId: req.body.userId,
+    comment: req.body.comment,
+  });
+  userdata
+    .save()
+    .then((result) => {
+      return res.status(200).send(result);
+    })
+    .catch((err) => {
+      return res.status(400).send({
+        error: err,
+      });
+    });
+};
+
+
+const getAllComment = (req, res) => {
+  commentData
+    .find(req.params.contentId).populate("userId")
+    .then((result) => {
+      res.status(200).send(result);
+    })
+    .catch((error) => {
+      res.status(400).send({
+        message: "not found",
+        error: error,
+      });
+    });
+};
+
 
 
 
@@ -196,5 +243,7 @@ module.exports = {
   getAllContent,
   getAllUser,
   like,
-  unlike
+  unlike,
+  comment,
+  getAllComment
 };
